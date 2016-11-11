@@ -91,13 +91,13 @@ class ChainCommandManager
                 )
             );
         } else {
-            $output->writeln(
-                sprintf(
+            $message = sprintf(
                     self::MSG_NOT_MASTER,
                     $command->getName(),
                     $master->getName()
-                )
-            );
+                );
+            $this->loggerInterface->error($message);
+            $output->writeln($message);
 
             return false;
         }
