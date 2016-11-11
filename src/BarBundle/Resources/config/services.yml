@@ -1,0 +1,9 @@
+parameters:
+    barbundle.command.hi.class:                   BarBundle\Command\HiCommand
+
+services:
+
+    barbundle.command.hi:
+        class: "%barbundle.command.hi.class%"
+        tags:
+            - {name: 'chaincommandbundle.command', channel: 'my_chain'}

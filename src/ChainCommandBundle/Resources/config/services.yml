@@ -1,0 +1,21 @@
+parameters:
+    chaincommandbundle.chain.class:                   ChainCommandBundle\Chain\Chain
+    chaincommandbundle.manager.class:                 ChainCommandBundle\Manager\ChainCommandManager
+    chaincommandbundle.event.commandsubscriber.class: ChainCommandBundle\Event\CommandSubscriber
+
+services:
+
+    chaincommandbundle.chain:
+        class: "%chaincommandbundle.chain.class%"
+
+    chaincommandbundle.manager:
+        class: "%chaincommandbundle.manager.class%"
+        arguments:
+            - "@chaincommandbundle.chain"
+
+    chaincommandbundle.event.commandsubscriber:
+        class: "%chaincommandbundle.event.commandsubscriber.class%"
+        arguments:
+            - "@chaincommandbundle.manager"
+        tags:
+            - { name: kernel.event_subscriber }

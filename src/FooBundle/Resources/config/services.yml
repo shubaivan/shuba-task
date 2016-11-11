@@ -1,0 +1,9 @@
+parameters:
+    foobundle.command.hello.class:      FooBundle\Command\HelloCommand
+
+services:
+
+    foobundle.command.hello:
+        class: "%foobundle.command.hello.class%"
+        tags:
+            - {name: 'chaincommandbundle.command', master: true, channel: 'my_chain'}
