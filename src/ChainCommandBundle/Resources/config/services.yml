@@ -2,6 +2,8 @@ parameters:
     chaincommandbundle.chain.class:                   ChainCommandBundle\Chain\Chain
     chaincommandbundle.manager.class:                 ChainCommandBundle\Manager\ChainCommandManager
     chaincommandbundle.event.commandsubscriber.class: ChainCommandBundle\Event\CommandSubscriber
+    logger.class:                                     Symfony\Bridge\Monolog\Logger
+    command_chain_log_file:                           "command_chain.log"
 
 services:
 
@@ -12,6 +14,7 @@ services:
         class: "%chaincommandbundle.manager.class%"
         arguments:
             - "@chaincommandbundle.chain"
+            - "@my_logger"
 
     chaincommandbundle.event.commandsubscriber:
         class: "%chaincommandbundle.event.commandsubscriber.class%"
@@ -19,3 +22,16 @@ services:
             - "@chaincommandbundle.manager"
         tags:
             - { name: kernel.event_subscriber }
+
+    my_logger:
+        class: "%logger.class%"
+        arguments:
+            - "command_chain"
+        calls:
+            - ["pushHandler", ["@my_handler"]]
+
+    my_handler:
+        class: Monolog\Handler\StreamHandler
+        arguments:
+            - "%kernel.logs_dir%/%command_chain_log_file%"
+            - 200
