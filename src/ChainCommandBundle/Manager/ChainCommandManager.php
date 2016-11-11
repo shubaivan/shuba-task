@@ -3,6 +3,7 @@
 namespace ChainCommandBundle\Manager;
 
 use ChainCommandBundle\Chain\Chain;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -13,6 +14,11 @@ class ChainCommandManager
 {
     const MSG_NOT_MASTER = 'Error: %s command is a member of %s command chain and cannot be executed on its own.';
     const MSG_EMPTY_MASTER = 'Error: %s without master.';
+    const MSG_START_CHAIN = '%s is a master command of a command chain that has registered member commands';
+    const MSG_CHAIN_MEMBER = '%s registered as a member of %s command chain';
+    const MSG_MASTER_ITSELF_FIRST = 'Executing %s command itself first:';
+    const MSG_EXECUTE_MEMBERS = 'Executing %s chain members:';
+    const MSG_MASTER_COMPLETE = 'Execution of %s chain completed';
 
     /**
      * @var Chain
@@ -20,13 +26,23 @@ class ChainCommandManager
     protected $chain;
 
     /**
+     * @var LoggerInterface
+     */
+    protected $loggerInterface;
+
+    /**
      * CommandSubscriber constructor.
      *
      * @param Chain $chain
+     * @param LoggerInterface $loggerInterface
      */
-    public function __construct(Chain $chain)
+    public function __construct(
+        Chain $chain,
+        LoggerInterface $loggerInterface
+    )
     {
         $this->chain = $chain;
+        $this->loggerInterface = $loggerInterface;
     }
 
     /**
@@ -57,6 +73,13 @@ class ChainCommandManager
     ) {
         $master = $this->getChain()->getMaster($channel);
         if ($master && $master->getName() === $command->getName()) {
+            $this->loggerInterface->info(sprintf(self::MSG_START_CHAIN, $command->getName()));
+            $members = $this->chain->getChainCommand($channel);
+            foreach ($members as $member) {
+                /** @var Command $member */
+                $this->loggerInterface->info(sprintf(self::MSG_CHAIN_MEMBER, $command->getName(), $member->getName()));
+            }
+            $this->loggerInterface->info(sprintf(self::MSG_MASTER_ITSELF_FIRST, $command->getName()));
             $this->doRun($command, $input, $output);
 
             return true;
@@ -101,10 +124,16 @@ class ChainCommandManager
 
         $chainCommands = $this->getChain()->getChainCommand($channel);
         if (count($chainCommands)) {
+            $this->loggerInterface->info(sprintf(self::MSG_EXECUTE_MEMBERS, $command->getName()));
             /** @var Command[] $chainCommands */
             foreach ($chainCommands as $chainCommand) {
-                $this->doRun($chainCommand, new ArrayInput([]), $output);
+                $this->doRun(
+                    $chainCommand, 
+                    new ArrayInput([]), 
+                    $output
+                );
             }
+            $this->loggerInterface->info(sprintf(self::MSG_MASTER_COMPLETE, $command->getName()));
         }
 
         return true;
@@ -121,11 +150,11 @@ class ChainCommandManager
      */
     protected function doRun(Command $command, InputInterface $input, OutputInterface $output)
     {
-        //        $bufferedOutput = new BufferedOutput();
-        $command->run($input, $output);
-//
-//        $message = trim($bufferedOutput->fetch());
-//        $this->logger->info($message);
-//        $output->writeln($message);
+        $bufferedOutput = new BufferedOutput();
+        $command->run($input, $bufferedOutput);
+        $message = trim($bufferedOutput->fetch());
+
+        $this->loggerInterface->info($message);
+        $output->writeln($message);
     }
 }
