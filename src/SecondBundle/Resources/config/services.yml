@@ -1,0 +1,9 @@
+parameters:
+    secondbundle.command.hi.class:                   SecondBundle\Command\SecondCommand
+
+services:
+
+    secondbundle.command.hi:
+        class: "%secondbundle.command.hi.class%"
+        tags:
+            - {name: 'chaincommandbundle.command', channel: 'my_chain', weight: 10}

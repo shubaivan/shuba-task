@@ -13,6 +13,7 @@ class ChainCommandCompilerPass implements CompilerPassInterface
 {
     const DEFAULT_MASTER = false;
     const DEFAULT_CHANNEL = 'default';
+    const DEFAULT_WEIGHT = 10;
 
     /**
      * Register commands with tagged "chaincommandbundle.command" for chain class.
@@ -22,6 +23,8 @@ class ChainCommandCompilerPass implements CompilerPassInterface
     public function process(ContainerBuilder $container)
     {
         $r = 1;
+        $i = 1;
+        $q = 1;
         $definition = $container->findDefinition(
             'chaincommandbundle.chain'
         );
@@ -30,7 +33,7 @@ class ChainCommandCompilerPass implements CompilerPassInterface
             'chaincommandbundle.command'
         );
 
-        $tagsLabels = ['master', 'channel'];
+        $tagsLabels = ['master', 'channel', 'weight'];
         foreach ($taggedServices as $id => $tags) {
             foreach ($tags as $attributes) {
 
@@ -49,6 +52,7 @@ class ChainCommandCompilerPass implements CompilerPassInterface
                         new Reference($id),
                         $attributes['master'],
                         $attributes['channel'],
+                        $attributes['weight'],
                     ]
                 );
             }

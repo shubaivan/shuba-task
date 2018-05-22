@@ -36,7 +36,7 @@ class Chain
      * @param bool    $master
      * @param string  $channel
      */
-    public function registerCommand(Command $command, $master, $channel)
+    public function registerCommand(Command $command, $master, $channel, $weight = 0)
     {
         if ($master) {
             if (isset($this->masterCommands[$channel])) {
@@ -51,7 +51,7 @@ class Chain
             }
             $this->masterCommands[$channel] = $command;
         } else {
-            $this->chains[$channel][] = $command;
+            $this->chains[$channel][$weight][] = $command;
         }
     }
 
@@ -71,13 +71,23 @@ class Chain
         }
 
         foreach ($this->chains as $channel => $chain) {
-            /** @var Command[] $chain */
             foreach ($chain as $arr) {
-                if ($arr->getName() === $command->getName()) {
-                    return $channel;
+                foreach ($arr as $member) {
+                    if ($member->getName() === $command->getName()) {
+                        return $channel;
+                    }
                 }
             }
         }
+
+//        foreach ($this->chains as $channel => $chain) {
+//            /** @var Command[] $chain */
+//            foreach ($chain as $arr) {
+//                if ($arr->getName() === $command->getName()) {
+//                    return $channel;
+//                }
+//            }
+//        }
 
         return;
     }
@@ -103,7 +113,17 @@ class Chain
      */
     public function getChainCommand($channel)
     {
-        return isset($this->chains[$channel]) ? $this->chains[$channel] : null;
+        $commands = [];
+
+        if (isset($this->chains[$channel])) {
+            $chain = $this->chains[$channel];
+            ksort($chain, SORT_DESC);
+            foreach ($chain as $arr) {
+                $commands = array_merge($commands, $arr);
+            }
+        }
+
+        return $commands;
     }
 
     /**
@@ -116,8 +136,10 @@ class Chain
     {
         /** @var Command $arr */
         foreach ($this->chains[$channel] as $arr) {
-            if ($arr->getName() === $command->getName()) {
-                return true;
+            foreach ($arr as $member) {
+                if ($member->getName() === $command->getName()) {
+                    return true;
+                }
             }
         }
 
